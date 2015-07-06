@@ -211,6 +211,7 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 		//Create the folders if they don't exist and add a bit to the log file if the folder is actually created
 		try {
 			if (create_directory(p) == true) {
+				std::cout << std::endl;
 				outputfile << "Directory: " << FolderName << std::endl;
 			}
 
@@ -218,7 +219,7 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 
 		catch (filesystem_error& e) {
 			std::cerr << "Error: " << e.what() << std::endl;
-			return false;
+			continue;
 		}
 
 		//Build Sorted File path
@@ -235,7 +236,7 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 		}
 
 		catch (filesystem_error& e) {
-			std::cerr << "Error: " << e.what() << std::endl;
+			std::cerr << "Error: " << e.what() << std::endl;			
 
 			//If rename fails copy file and catch any exceptions 
 			try {
@@ -244,7 +245,6 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 
 			catch (filesystem_error& e) {
 				std::cerr << "Error: " << e.what() << std::endl;
-				outputfile.close();
 				return false;
 			}
 
@@ -255,14 +255,12 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 
 			catch (filesystem_error& e) {
 				std::cerr << "Error: " << e.what() << std::endl;
-				outputfile.close();
 				return false;
-			}
+			}		
 		}
 
 		//Record all of the sorted files and their directory in a log.		 
-		outputfile << itr->SortedFilePath.filename() << std::endl;
-		outputfile << std::endl;
+		outputfile << itr->SortedFilePath.filename() << std::endl;		
 	}	
 
 	outputfile.close();
