@@ -151,6 +151,7 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 	
 	std::ofstream outputfile;
 	std::string DestinationPath;
+	
 	DestinationPath = SortDestinationDirectory.string() + "\\Sorted Files.txt";
 	outputfile.open(DestinationPath,std::ios::out | std::ios::trunc);
 
@@ -159,16 +160,20 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 		return false;
 	}
 
-
 	for (std::vector<SortFiles>::iterator itr = mkvvector.begin(); itr != mkvvector.end(); ++itr) {
 		std::size_t found;
 		std::size_t found2;
 
 		//Create the folder name by pruning out underscores/fansub group name/chksum/resolution no./episode/etc. from the file name and save it in both mkvvector and mkvvectordirectory
 
+
 		FileName = itr->OriginalFilePath.stem().string();				
-		found2 = FileName.find_first_of(']');
-		FileName = FileName.substr(found2+2);		
+	
+		if (FileName[0] == '[') {
+			found2 = FileName.find_first_of(']');		
+			FileName = FileName.substr(found2+2);
+		}		
+		
 
 		for (std::string::iterator i = FileName.begin(); i != FileName.end(); ++i) {
 			if (*i == '_') {
@@ -192,15 +197,16 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 			FolderName = FileName.substr(0, (found - 1));			
 		}
 		
-		//Skip the file, if the file name somehow creates problems.
+		
+		/*//Skip the file, if the file name somehow creates problems.
 		else {
 			continue;
-		}
+		}*/
 
 		
 		//Build folder path
 		FolderPath = SortDestinationDirectory.string() + "\\" + FolderName;
-		path p(FolderPath);		
+		path p(FolderPath);				
 		
 		//Create the folders if they don't exist and add a bit to the log file if the folder is actually created
 		try {
