@@ -211,7 +211,7 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 		//Create the folders if they don't exist and add a bit to the log file if the folder is actually created
 		try {
 			if (create_directory(p) == true) {
-				std::cout << std::endl;
+				outputfile << std::endl;				
 				outputfile << "Directory: " << FolderName << std::endl;
 			}
 
