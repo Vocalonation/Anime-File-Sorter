@@ -14,6 +14,7 @@ struct SortFiles {
 
 int filepicker(boost::filesystem::path SortTargetDirectory, std::vector<SortFiles> & mkvvector, boost::filesystem::path SortDestinationDirectory);
 bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path SortDestinationDirectory);
+std::string FileNameMake (std::string FileName)
 
 
 int main (int argc, char * argv[]) {
@@ -167,36 +168,7 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 		//Create the folder name by pruning out underscores/fansub group name/chksum/resolution no./episode/etc. from the file name and save it in both mkvvector and mkvvectordirectory
 
 
-		FileName = itr->OriginalFilePath.stem().string();				
-	
-		if (FileName[0] == '[') {
-			found2 = FileName.find_first_of(']');		
-			FileName = FileName.substr(found2+2);
-		}		
-		
-
-		for (std::string::iterator i = FileName.begin(); i != FileName.end(); ++i) {
-			if (*i == '_') {
-				*i = ' ';
-			}
-		}
-
-		if (FileName.find_last_of('-') != std::string::npos){
-			found = FileName.find_last_of('-');
-			FolderName = FileName.substr(0,(found-1));			
-			
-		}
-
-		else if (FileName.find_first_of('[') != std::string::npos) {
-		 	found = FileName.find_first_of('[');
-		 	FolderName = FileName.substr(0,(found-1));								
-		}		
-		
-		else if (FileName.find_first_of('(') != std::string::npos) {
-			found = FileName.find_first_of('(');
-			FolderName = FileName.substr(0, (found - 1));			
-		}
-		
+		FolderName = FileNameMake(itr->OriginalFilePath.stem().string());						
 		
 		/*//Skip the file, if the file name somehow creates problems.
 		else {
