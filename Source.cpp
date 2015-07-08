@@ -270,7 +270,7 @@ std::string FolderNameMake(std::string FileName) {
 		FileName = std::string(FileName.begin(), itr);
 	}
 	else if (itr2 < itr) {
-		while (isalnum(*(itr2-1)) == 0 && *(itr2 - 1) != '!') {
+		while (isalnum(*(itr2-1)) == 0 && *(itr2 - 1) != '!' && *(itr2 - 1) != '~') {
 			--itr2;
 		}
 		FileName = std::string(FileName.begin(), itr2);
@@ -281,7 +281,11 @@ std::string FolderNameMake(std::string FileName) {
 	//No hypen, go look for a number and hope that it is an episode number or else this is not going to work...
 
 		if (find_if(FileName.begin(), FileName.end(), IsDigit) != FileName.end()) {
-			FileName = std::string(FileName.begin(), find_if(FileName.begin(), FileName.end(), IsDigit) - 1);
+			itr = find_if(FileName.begin(), FileName.end(), IsDigit);
+			while (isalnum(*(itr-1)) == 0 && *(itr - 1) != '!' && *(itr - 1) != '~') {
+				--itr;
+			}
+			FileName = std::string(FileName.begin(), itr);
 		}
 
 	}
