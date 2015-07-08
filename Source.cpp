@@ -4,6 +4,8 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <algorithm>
+#include <cctype>
 
 using namespace boost::filesystem;
 
@@ -14,7 +16,9 @@ struct SortFiles {
 
 int filepicker(boost::filesystem::path SortTargetDirectory, std::vector<SortFiles> & mkvvector, boost::filesystem::path SortDestinationDirectory);
 bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path SortDestinationDirectory);
-std::string FileNameMake (std::string FileName);
+std::string FolderNameMake (std::string FileName);
+bool IsAlpha(char a);
+bool IsDigit(char a);
 
 
 int main (int argc, char * argv[]) {
@@ -72,7 +76,7 @@ int main (int argc, char * argv[]) {
 	}
 
 	//Grab the .mkv files from a directory and write them into a log file
-	std::vector<SortFiles> mkvvector, mkvvectordirectory;
+	std::vector<SortFiles> mkvvector;
 	
 	FileCounter = filepicker(SortTargetDirectory, mkvvector, SortDestinationDirectory);	
 	if (FileCounter <= 0) {
@@ -162,13 +166,10 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 	}
 
 	for (std::vector<SortFiles>::iterator itr = mkvvector.begin(); itr != mkvvector.end(); ++itr) {
-		std::size_t found;
-		std::size_t found2;
-
+		
 		//Create the folder name by pruning out underscores/fansub group name/chksum/resolution no./episode/etc. from the file name and save it in both mkvvector and mkvvectordirectory
 
-
-		FolderName = FileNameMake(itr->OriginalFilePath.stem().string());						
+		FolderName = FolderNameMake(itr->OriginalFilePath.stem().string());						
 		
 		/*//Skip the file, if the file name somehow creates problems.
 		else {
@@ -240,35 +241,81 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 	return true;
 }
 
-std::string FileNameMake (std::string FileName) {
+std::string FolderNameMake(std::string FileName) {
 
-	if (FileName[0] == '[') {
-			found2 = FileName.find_first_of(']');		
-			FileName = FileName.substr(found2+2);
-		}		
-		
+	//Initialize the front of the Folder name by taking out the file name and any underscores
 
-		for (std::string::iterator i = FileName.begin(); i != FileName.end(); ++i) {
-			if (*i == '_') {
-				*i = ' ';
+	std::string::iterator itr = FileName.begin();
+	std::string::iterator itr2;
+
+	if (*itr == '[') {
+		itr = std::find_if(find(FileName.begin(), FileName.end(), ']'), FileName.end(), IsAlpha);
+		FileName = std::string(itr, FileName.end());
+	}
+	
+	for (std::string::iterator i = FileName.begin(); i != FileName.end(); ++i) {
+		if (*i == '_') {
+			*i = ' ';
+		}
+	}
+	
+	//Initialize the end of the Folder name by finding either a square bracket or a bracket.
+	itr = find(FileName.begin(), FileName.end(), '[');
+	itr2 = find(FileName.begin(), FileName.end(), '(');
+
+	if (itr < itr2)	{
+		while (isalnum(*(itr-1)) == 0 && *(itr-1) != '!') { //Shrinking the end down just in case it has spaces
+			--itr;
+		}
+		FileName = std::string(FileName.begin(), itr);
+	}
+	else if (itr2 < itr) {
+		while (isalnum(*(itr2-1)) == 0 && *(itr2 - 1) != '!') {
+			--itr2;
+		}
+		FileName = std::string(FileName.begin(), itr2);
+	}
+	
+	//Look for a hyphen 	
+	if (find(FileName.begin(), FileName.end(), '-') == FileName.end()) {
+	//No hypen, go look for a number and hope that it is an episode number or else this is not going to work...
+
+		if (find_if(FileName.begin(), FileName.end(), IsDigit) != FileName.end()) {
+			FileName = std::string(FileName.begin(), find_if(FileName.begin(), FileName.end(), IsDigit) - 1);
+		}
+
+	}
+	
+	//Ok we found a hyphen, check that actually delimits an episode number by checking if there are numbers in the three positions afterward, if not, look for the next hyphen. 
+	else {
+		itr = FileName.begin();
+		while (find(itr, FileName.end(), '-') != FileName.end()) {
+
+			itr = find(itr, FileName.end(), '-');
+
+			if (find_if(itr, itr + 3, IsDigit) != (itr + 3)) {
+				while (isalnum(*(itr-1)) == 0 && *(itr-1) != '!') { //Shrink the end down in case of spaces
+					--itr;
+				}
+
+				FileName = std::string(FileName.begin(), itr);
+				break;
+			}
+			else {
+				itr++;
 			}
 		}
+	}
 
-		if (FileName.find_last_of('-') != std::string::npos){
-			found = FileName.find_last_of('-');
-			FolderName = FileName.substr(0,(found-1));			
-			
-		}
 
-		else if (FileName.find_first_of('[') != std::string::npos) {
-		 	found = FileName.find_first_of('[');
-		 	FolderName = FileName.substr(0,(found-1));								
-		}		
-		
-		else if (FileName.find_first_of('(') != std::string::npos) {
-			found = FileName.find_first_of('(');
-			FolderName = FileName.substr(0, (found - 1));			
-		}
+	return FileName;
+}
 
+bool IsAlpha(char a) {
+	return (std::isalpha(a));
+}
+
+bool IsDigit(char a) {
+	return (std::isdigit(a));
 }
 
