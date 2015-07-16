@@ -12,6 +12,7 @@ using namespace boost::filesystem;
 struct SortFiles {
 	boost::filesystem::path OriginalFilePath;
 	boost::filesystem::path SortedFilePath;
+	std::string AnimeName;
 };
 
 int filepicker(boost::filesystem::path SortTargetDirectory, std::vector<SortFiles> & mkvvector, boost::filesystem::path SortDestinationDirectory);
@@ -169,7 +170,8 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 		
 		//Create the folder name by pruning out underscores/fansub group name/chksum/resolution no./episode/etc. from the file name and save it in both mkvvector and mkvvectordirectory
 
-		FolderName = FolderNameMake(itr->OriginalFilePath.stem().string());						
+		FolderName = FolderNameMake(itr->OriginalFilePath.stem().string());				
+		itr->AnimeName = FolderName;
 		
 		/*//Skip the file, if the file name somehow creates problems.
 		else {
