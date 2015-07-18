@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string>
 #include <iostream>
+#include <vector>
+#include "AnimeData.h"
 
 #include <curl.h>
 
@@ -18,21 +20,35 @@ static size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
 	return written;
 }
 
-int MALApiGET(std::string UserName, std::string Password, std::string AnimeName)
+int MALApiGET(std::string UserName, std::string Password, std::string AnimeName, std::string Path)
 {
 	CURL *curl_handle;
-	static const char *pagefilename = "page.out";
+
+	//Build info.xml path
+	std::string FilePath;
+
+	FilePath = Path + '\\' + "info.xml";
+
+	static const char *pagefilename = FilePath.c_str();
 	FILE *pagefile;
 
-	//Construct MAL URL
-
+	//Initialize
 	curl_global_init(CURL_GLOBAL_ALL);
 
 	//Init the curl session
 	curl_handle = curl_easy_init();
 
-	//Specify the URL to get
-	curl_easy_setopt(curl_handle, CURLOPT_URL, "http://myanimelist.net/api/anime/search.xml?q=Hibike!+Euphonium");
+	//Construct url
+	for (std::string::iterator itr = AnimeName.begin(); itr != AnimeName.end(); ++itr) {
+		if (*itr == ' ') *itr = '+';
+	}
+
+	std::string query = MALQUERY + AnimeName; //Defined in AnimeData.h
+	char URL[100];
+	strcpy(URL, query.c_str());
+
+	std::cout << query << std::endl;
+	curl_easy_setopt(curl_handle, CURLOPT_URL, URL);
 
 	//Switch on full protocol/debug output while testing
 	curl_easy_setopt(curl_handle, CURLOPT_VERBOSE, 1L);
@@ -40,43 +56,50 @@ int MALApiGET(std::string UserName, std::string Password, std::string AnimeName)
 	//Send all data to this function
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_data);
 
-	/* send all data to this function  */
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_data);
-
 	//Disable progress meter, set to 0L to enable and disable debug output
 	curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L);
 
-	/* some servers don't like requests that are made without a user-agent
-	field, so we provide one */
-	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
-
 	//Authenticate
-	std::string authentication = UserName + ':' + Password;
+	char authentication[100];
+	strcpy(authentication, (UserName + ":" + Password).c_str());
+
 	curl_easy_setopt(curl_handle, CURLOPT_USERPWD, authentication);
 
 	//Authentication protocol
 	curl_easy_setopt(curl_handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
 
+	/* example.com is redirected, so we tell libcurl to follow redirection */
+	curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1L);
 
-	/* check for errors */
-	if (res != CURLE_OK) {
-		fprintf(stderr, "curl_easy_perform() failed: %s\n",
-			curl_easy_strerror(res));
+	// open the file 	
+	pagefile = fopen(pagefilename, "wb");
+	if (pagefile) {
+
+		// write the page body to this file handle 
+		curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, pagefile);
+
+		// get it! 
+		curl_easy_perform(curl_handle);
+
+		// close the header file 
+		fclose(pagefile);
+
+		//Clean up curl stuff
+		curl_easy_cleanup(curl_handle);
+
+
+
+		return 0;
 	}
-
 
 	else {
-		//Now what am I going to do with this...
+		//Clean up curl stuff
+		curl_easy_cleanup(curl_handle);
 
-		//Parse the string
+		// close the header file 
+		fclose(pagefile);
 
-		//Return some data structure with the metadata I guess? and write the metadata separately
+
+		return 1;
 	}
-
-	//Clean up curl stuff
-	curl_easy_cleanup(curl_handle);
-
-	free(chunk.memory);
-
-	return 0;
 }

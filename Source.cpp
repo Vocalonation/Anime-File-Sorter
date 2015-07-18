@@ -6,18 +6,16 @@
 #include <vector>
 #include <algorithm>
 #include <cctype>
+#include "AnimeData.h"
+#include "MALApiAccess.h"
+#include <ctime>
 
 using namespace boost::filesystem;
-
-struct SortFiles {
-	boost::filesystem::path OriginalFilePath;
-	boost::filesystem::path SortedFilePath;
-	std::string AnimeName;
-};
 
 int filepicker(boost::filesystem::path SortTargetDirectory, std::vector<SortFiles> & mkvvector, boost::filesystem::path SortDestinationDirectory);
 bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path SortDestinationDirectory);
 std::string FolderNameMake (std::string FileName);
+bool metadatacollector(path SortDestinationDirectory);
 bool IsAlpha(char a);
 bool IsDigit(char a);
 
@@ -30,16 +28,17 @@ int main (int argc, char * argv[]) {
 	path SortTargetDirectory;
 	path SortDestinationDirectory;
 	int FileCounter;
+	int MALFlag = 0;
 
 	if (argc == 1) { //For scrubs
 		std::cout << "Correct usage is -t for the path to folder to be sorted and -d for the path to the save destination folder." << std::endl;
-		std::cout << "Enclose your file path in " " if your has spaces." << std::endl;
+		std::cout << "Enclose your file path in \" \" if your path has spaces." << std::endl;
 		return 0;
 	}
 
 	if (commandline[0].compare("-help") == 0) {
 		std::cout << "Correct usage is -t for the path to folder to be sorted and -d for the path to the save destination folder." << std::endl;
-		std::cout << "Enclose your file path in " " if your has spaces." << std::endl;
+		std::cout << "Enclose your file path in " " if your path has spaces." << std::endl;
 		return 0;
 	}	
 	//Initialize the two path variables
@@ -51,6 +50,9 @@ int main (int argc, char * argv[]) {
 			else if (commandline[i].compare("-d") == 0) {
 				SortDestinationDirectory = commandline[i + 1];
 				i++;
+			}
+			else if (commandline[i].compare("-m") == 0) {
+				MALFlag = 1;				
 			}
 
 			else {
@@ -90,6 +92,14 @@ int main (int argc, char * argv[]) {
 	//Make the folders based on the file name and move the files
 	if (filesorter(mkvvector,SortDestinationDirectory) == false) return 1; 	
 
+	//Option to grab info from MAL
+	std::string UserName, Password;
+	if (MALFlag == 1) {
+		metadatacollector(SortDestinationDirectory);
+	}
+	
+
+	
 	//All done
 	std::cout << "Sorting Complete!" << std::endl;
 	
@@ -323,5 +333,38 @@ bool IsAlpha(char a) {
 
 bool IsDigit(char a) {
 	return (std::isdigit(a));
+}
+
+bool metadatacollector(path SortDestinationDirectory) {
+	std::string UserName;
+	std::string Password;
+	std::string MetadataPath;
+
+	std::cout << "Enter your MAL username: " << std::endl;
+	std::cin >> UserName;
+	std::cout << "Enter your MAL password: " << std::endl;
+	std::cin >> Password;
+
+	//Go through the target sort directory. Locate the info.xml in each folder. Get from MAL if the file doesn't exist or it is over 30 days old.
+	for (directory_iterator itr(SortDestinationDirectory); itr != directory_iterator(); ++itr) {
+		
+		if (is_directory(itr->path()) == true) {
+			MetadataPath = itr->path().string() + "info.xml";
+			
+			if (exists(MetadataPath)) {
+				if (time(0) - last_write_time(MetadataPath) >= 3000000) {
+					return true;
+				}
+				else {
+					MALApiGET(UserName, Password, itr->path().filename().string(), itr->path().string());
+				}
+			}
+			else {
+				MALApiGET(UserName, Password, itr->path().filename().string(), itr->path().string());
+			}
+		
+		}		
+	}
+	return true;
 }
 
