@@ -19,6 +19,7 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 std::string FolderNameMake (std::string FileName);
 bool IsAlpha(char a);
 bool IsDigit(char a);
+char getSeparator();
 
 
 int main (int argc, char * argv[]) {
@@ -126,7 +127,7 @@ int filepicker(boost::filesystem::path SortTargetDirectory, std::vector<SortFile
 	std::string DestinationPath;
 
 //Write the vector to a log of some sort....
-	DestinationPath = SortDestinationDirectory.string() + "\\log.txt";	
+	DestinationPath = SortDestinationDirectory.string() + getSeparator() + "log.txt";	
 	//std::cout << DestinationPath << std::endl;
 	
 	outputfile.open(DestinationPath,std::ios::out | std::ios::trunc);	
@@ -157,7 +158,7 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 	std::ofstream outputfile;
 	std::string DestinationPath;
 	
-	DestinationPath = SortDestinationDirectory.string() + "\\Sorted Files.txt";
+	DestinationPath = SortDestinationDirectory.string() + getSeparator() + "Sorted Files.txt";
 	outputfile.open(DestinationPath,std::ios::out | std::ios::trunc);
 
 	if(outputfile.bad() == true) {
@@ -178,7 +179,7 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 
 		
 		//Build folder path
-		FolderPath = SortDestinationDirectory.string() + "\\" + FolderName;
+		FolderPath = SortDestinationDirectory.string() + getSeparator() + FolderName;
 		path p(FolderPath);				
 		
 		//Create the folders if they don't exist and add a bit to the log file if the folder is actually created
@@ -196,7 +197,7 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 		}
 
 		//Build Sorted File path
-		FilePath = FolderPath + "\\" + itr->OriginalFilePath.filename().string();
+		FilePath = FolderPath + getSeparator() + itr->OriginalFilePath.filename().string();
 		path g(FilePath);
 
 		itr->SortedFilePath = g;
@@ -323,3 +324,10 @@ bool IsDigit(char a) {
 	return (std::isdigit(a));
 }
 
+char getSeparator() {
+	#ifdef _WIN32
+	    return '\\';
+	#else
+	    return '/';
+	#endif
+}
