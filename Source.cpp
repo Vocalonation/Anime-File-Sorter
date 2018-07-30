@@ -212,25 +212,17 @@ bool filesorter(std::vector <SortFiles> & mkvvector, boost::filesystem::path Sor
 		catch (filesystem_error& e) {
 			std::cerr << "Error: " << e.what() << std::endl;			
 
-			//If rename fails copy file and catch any exceptions 
+			//If rename fails copy file to new location and delete the original while catching any exceptions
 			try {
 				copy_file(itr->OriginalFilePath, itr->SortedFilePath);
-			}
-
-			catch (filesystem_error& e) {
-				std::cerr << "Error: " << e.what() << std::endl;
-				return false;
-			}
-
-			//Delete existing file at old path and catch any exceptions
-			try {
 				remove(itr->OriginalFilePath);
 			}
 
 			catch (filesystem_error& e) {
 				std::cerr << "Error: " << e.what() << std::endl;
 				return false;
-			}		
+			}
+
 		}
 
 		//Record all of the sorted files and their directory in a log.		 
